@@ -54,7 +54,6 @@
 , withLadspa ? withFullDeps # LADSPA audio filtering
 , withLibplacebo ? withFullDeps && !stdenv.isDarwin # libplacebo video processing library
 , withLzma ? withHeadlessDeps # xz-utils
-, withMfx ? withFullDeps && (with stdenv.targetPlatform; isLinux && !isAarch) # Hardware acceleration via intel-media-sdk/libmfx
 , withModplug ? withFullDeps && !stdenv.isDarwin # ModPlug support
 , withMp3lame ? withHeadlessDeps # LAME MP3 encoder
 , withMysofa ? withFullDeps # HRTF support via SOFAlizer
@@ -90,6 +89,7 @@
 , withVmaf ? withFullDeps && withGPLv3 && !stdenv.isAarch64 # Netflix's VMAF (Video Multi-Method Assessment Fusion)
 , withVoAmrwbenc ? withFullDeps # AMR-WB encoder
 , withVorbis ? withHeadlessDeps # Vorbis de/encoding, native encoder exists
+, withVpl ? withFullDeps && (with stdenv.targetPlatform; isLinux) # Hardware acceleration via intel-media-sdk/libmfx
 , withVpx ? withHeadlessDeps && stdenv.buildPlatform == stdenv.hostPlatform # VP8 & VP9 de/encoding
 , withVulkan ? withFullDeps && !stdenv.isDarwin
 , withWebp ? withFullDeps # WebP encoder
@@ -204,7 +204,6 @@
 , libraw1394
 , libdrm
 , libiconv
-, intel-media-sdk
 , libmodplug
 , libmysofa
 , libogg
@@ -231,6 +230,7 @@
 , xz
 , nv-codec-headers
 , nv-codec-headers-11
+, oneVPL
 , openal
 , ocl-icd # OpenCL ICD
 , opencl-headers  # OpenCL headers
@@ -467,7 +467,6 @@ stdenv.mkDerivation (finalAttrs: {
     (enableFeature withDrm "libdrm")
     (enableFeature withIconv "iconv")
     (enableFeature withJack "libjack")
-    (enableFeature withMfx "libmfx")
     (enableFeature withModplug "libmodplug")
     (enableFeature withMysofa "libmysofa")
     (enableFeature withOpus "libopus")
@@ -484,6 +483,7 @@ stdenv.mkDerivation (finalAttrs: {
     (enableFeature withVorbis "libvorbis")
     (enableFeature withVmaf "libvmaf")
     (enableFeature withVpx "libvpx")
+    (optionalString withVpl "--enable-libvpl")
     (enableFeature withWebp "libwebp")
     (enableFeature withXlib "xlib")
     (enableFeature withXcb "libxcb")
@@ -578,7 +578,6 @@ stdenv.mkDerivation (finalAttrs: {
   ++ optionals withLadspa [ ladspaH ]
   ++ optionals withLibplacebo [ libplacebo vulkan-headers ]
   ++ optionals withLzma [ xz ]
-  ++ optionals withMfx [ intel-media-sdk ]
   ++ optionals withModplug [ libmodplug ]
   ++ optionals withMp3lame [ lame ]
   ++ optionals withMysofa [ libmysofa ]
@@ -610,6 +609,7 @@ stdenv.mkDerivation (finalAttrs: {
   ++ optionals withVmaf [ libvmaf ]
   ++ optionals withVoAmrwbenc [ vo-amrwbenc ]
   ++ optionals withVorbis [ libvorbis ]
+  ++ optionals withVpl [ oneVPL ]
   ++ optionals withVpx [ libvpx ]
   ++ optionals withV4l2 [ libv4l ]
   ++ optionals withVulkan [ vulkan-headers vulkan-loader ]
