@@ -4,9 +4,28 @@
 , cmake
 , asciidoc
 , pkg-config
+
+, buildFramework ? stdenv.hostPlatform.isDarwin
+
+, enableDrafts ? true
+, enableWebSocket ? enableDrafts
+, enableRadixTree ? enableDrafts
+, withTls ? enableWebSocket
+, gnutls
+, withNss ? enableWebSocket
+
+, withLibbsd ? true
+, libbsd
+
+, enableCurve ? true
+, withLibsodium ? true
 , libsodium
-, enableDrafts ? false
+, withGssapiKrb5 ? true
 }:
+
+assert enableCurve -> withLibsodium;
+assert enableDrafts -> enableWebSocket;
+assert enableDrafts -> enableRadixTree;
 
 stdenv.mkDerivation rec {
   pname = "zeromq";
@@ -20,11 +39,25 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ cmake asciidoc pkg-config ];
-  buildInputs = [ libsodium ];
+  buildInputs = []
+    ++ lib.optional (withTls || withNss) gnutls
+    ++ lib.optional withLibbsd libbsd
+    ++ lib.optional withLibsodium libsodium
+    ;
 
   doCheck = false; # fails all the tests (ctest)
 
-  cmakeFlags = lib.optional enableDrafts "-DENABLE_DRAFTS=ON";
+  cmakeFlags = [
+    (lib.cmakeBool "ZMQ_BUILD_FRAMEWORK" buildFramework)
+    (lib.cmakeBool "ENABLE_DRAFTS" enableDrafts)
+    (lib.cmakeBool "ENABLE_WS" enableWebSocket)
+    (lib.cmakeBool "ENABLE_RADIX_TREE" enableRadixTree)
+    (lib.cmakeBool "WITH_TLS" withTls)
+    (lib.cmakeBool "WITH_NSS" withNss)
+    (lib.cmakeBool "WITH_LIBBSD" withLibbsd)
+    (lib.cmakeBool "ENABLE_CURVE" enableCurve)
+    (lib.cmakeBool "WITH_LIBSODIUM" withLibsodium)
+  ];
 
   postPatch = ''
     substituteInPlace CMakeLists.txt \
